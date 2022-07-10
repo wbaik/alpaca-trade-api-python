@@ -42,16 +42,14 @@ class AsyncRest:
         :param entity_list_type:
         :return:
         """
-        df = pd.DataFrame({})
+        df_list = []
         url = self._get_historic_url(entity_type, symbol)
         async for packet in self._request(url, payload):
             if packet.get(entity_type):
                 response = entity_list_type(packet[entity_type]).df
-                df = pd.concat([df, response], axis=0)
-                if len(df) >= limit:
-                    break
-
-        return df
+                if not response.empty:
+                    df_list += [response]
+        return pd.concat(df_list, axis=0) if df_list else pd.DataFrame({})
 
     async def get_bars_async(self,
                              symbol,
@@ -59,7 +57,8 @@ class AsyncRest:
                              end,
                              timeframe,
                              limit=1000,
-                             adjustment='raw'):
+                             adjustment='raw',
+                             feed='sip'):
         _type = "bars"
 
         payload = {
@@ -68,32 +67,35 @@ class AsyncRest:
             "end":        end,
             "timeframe":  timeframe,
             "limit":      limit,
+            "feed":       feed,
         }
         df = await self._iterate_requests(symbol, payload, limit, _type,
                                           BarsV2)
 
         return symbol, df
 
-    async def get_trades_async(self, symbol, start, end, limit=1000):
+    async def get_trades_async(self, symbol, start, end, limit=1000, feed='sip'):
         _type = "trades"
 
         payload = {
             "start": start,
             "end":   end,
             "limit": limit,
+            "feed": feed,
         }
         df = await self._iterate_requests(symbol, payload, limit, _type,
                                           TradesV2)
 
         return symbol, df
 
-    async def get_quotes_async(self, symbol, start, end, limit=1000):
+    async def get_quotes_async(self, symbol, start, end, limit=1000, feed='sip'):
         _type = "quotes"
 
         payload = {
             "start": start,
             "end":   end,
             "limit": limit,
+            "feed": feed,
         }
         df = await self._iterate_requests(symbol, payload, limit, _type,
                                           QuotesV2)

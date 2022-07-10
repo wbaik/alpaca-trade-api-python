@@ -69,44 +69,62 @@ async def get_historic_data_base(symbols, data_type: DataType, start, end,
 
     print(f"Total of {len(results)} {data_type}, and {bad_requests} "
           f"empty responses.")
+    return results
 
 
 async def get_historic_bars(symbols, start, end, timeframe: TimeFrame):
-    await get_historic_data_base(symbols, DataType.Bars, start, end, timeframe)
-
+    return await get_historic_data_base(symbols, DataType.Bars, start, end, timeframe)
 
 async def get_historic_trades(symbols, start, end, timeframe: TimeFrame):
-    await get_historic_data_base(symbols, DataType.Trades, start, end)
+    return await get_historic_data_base(symbols, DataType.Trades, start, end)
 
 
 async def get_historic_quotes(symbols, start, end, timeframe: TimeFrame):
-    await get_historic_data_base(symbols, DataType.Quotes, start, end)
+    return await get_historic_data_base(symbols, DataType.Quotes, start, end)
 
 
 async def main(symbols):
-    start = pd.Timestamp('2021-05-01', tz=NY).date().isoformat()
+    start = pd.Timestamp('2021-08-01', tz=NY).date().isoformat()
     end = pd.Timestamp('2021-08-30', tz=NY).date().isoformat()
-    timeframe: TimeFrame = TimeFrame.Day
-    await get_historic_bars(symbols, start, end, timeframe)
-    await get_historic_trades(symbols, start, end, timeframe)
-    await get_historic_quotes(symbols, start, end, timeframe)
-
+    timeframe: TimeFrame = TimeFrame.Minute
+    a = await get_historic_bars(symbols, start, end, timeframe)
+    b = await get_historic_trades(symbols, start, end, timeframe)
+    c = await get_historic_quotes(symbols, start, end, timeframe)
+    return a, b, c
 
 if __name__ == '__main__':
     api_key_id = os.environ.get('APCA_API_KEY_ID')
     api_secret = os.environ.get('APCA_API_SECRET_KEY')
-    base_url = "https://paper-api.alpaca.markets"
-    feed = "iex"  # change to "sip" if you have a paid account
+    # base_url = "https://paper-api.alpaca.markets"
+    # feed = "sip"  # change to "sip" if you have a paid account
 
     rest = AsyncRest(key_id=api_key_id,
                      secret_key=api_secret)
 
     api = tradeapi.REST(key_id=api_key_id,
-                        secret_key=api_secret,
-                        base_url=URL(base_url))
+                        secret_key=api_secret,)
+                        # base_url=URL(base_url))
 
     start_time = time.time()
     symbols = [el.symbol for el in api.list_assets(status='active')]
-    symbols = symbols[:200]
-    asyncio.run(main(symbols))
+    symbols = symbols[:20]
+    a, b, c = asyncio.run(main(symbols))
     print(f"took {time.time() - start_time} sec")
+
+    print("1.Result of historic-bar is as follows")
+    for ticker, dataframe in a:
+        if not dataframe.empty:
+            print("Ticker: {}".format(ticker))
+            print(dataframe)
+
+    print("2.Result of historic-trade is as follows")
+    for ticker, dataframe in b:
+        if not dataframe.empty:
+            print("Ticker: {}".format(ticker))
+            print(dataframe)
+
+    print("3.Result of historic-quote is as follows")
+    for ticker, dataframe in c:
+        if not dataframe.empty:
+            print("Ticker: {}".format(ticker))
+            print(dataframe)
