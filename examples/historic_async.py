@@ -45,30 +45,22 @@ async def get_historic_data_base(symbols, data_type: DataType, start, end,
     msg = f"Getting {data_type} data for {len(symbols)} symbols"
     msg += f", timeframe: {timeframe}" if timeframe else ""
     msg += f" between dates: start={start}, end={end}"
-    print(msg)
-    step_size = 1000
     results = []
-    for i in range(0, len(symbols), step_size):
-        tasks = []
-        for symbol in symbols[i:i+step_size]:
-            args = [symbol, start, end, timeframe.value] if timeframe else \
-                [symbol, start, end]
-            tasks.append(get_data_method(data_type)(*args))
-
-        if minor >= 8:
-            results.extend(await asyncio.gather(*tasks, return_exceptions=True))
-        else:
-            results.extend(await gather_with_concurrency(500, *tasks))
+    tasks = []
+    for symbol in symbols:
+        args = [symbol, start, end, timeframe.value] if timeframe else [symbol, start, end]
+        tasks.append(asyncio.create_task(get_data_method(data_type)(*args)))
+    done, pending = await asyncio.wait(tasks, timeout=600.0)
+    results.extend([item.result() for item in done])
 
     bad_requests = 0
     for response in results:
         if isinstance(response, Exception):
             print(f"Got an error: {response}")
-        elif not len(response[1]):
-            bad_requests += 1
 
     print(f"Total of {len(results)} {data_type}, and {bad_requests} "
           f"empty responses.")
+    print("Total count of done: {} of the total tickers count: {}".format(len(done), len(symbols)))
     return results
 
 
@@ -84,13 +76,17 @@ async def get_historic_quotes(symbols, start, end, timeframe: TimeFrame):
 
 
 async def main(symbols):
-    start = pd.Timestamp('2021-08-01', tz=NY).date().isoformat()
-    end = pd.Timestamp('2021-08-30', tz=NY).date().isoformat()
+    # start = pd.Timestamp('2022-02-10', tz=NY).date().isoformat()
+    # end = pd.Timestamp('2022-02-10', tz=NY).date().isoformat()
+    # start = pd.Timestamp('2021-02-10 09:30:00', tz='UTC').date().isoformat()
+    # end = pd.Timestamp('2021-02-10 09:45:00', tz='UTC').date().isoformat()
+    start, end = '2021-02-10T16:30:00Z', '2021-02-10T16:45:00Z'
     timeframe: TimeFrame = TimeFrame.Minute
-    a = await get_historic_bars(symbols, start, end, timeframe)
-    b = await get_historic_trades(symbols, start, end, timeframe)
+    # a = await get_historic_bars(symbols, start, end, timeframe)
+    # b = await get_historic_trades(symbols, start, end, timeframe)
     c = await get_historic_quotes(symbols, start, end, timeframe)
-    return a, b, c
+    # return a, b, c
+    return c
 
 if __name__ == '__main__':
     api_key_id = os.environ.get('APCA_API_KEY_ID')
@@ -106,25 +102,32 @@ if __name__ == '__main__':
                         # base_url=URL(base_url))
 
     start_time = time.time()
-    symbols = [el.symbol for el in api.list_assets(status='active')]
-    symbols = symbols[:20]
-    a, b, c = asyncio.run(main(symbols))
+    # symbols = [el.symbol for el in api.list_assets(status='active')]
+    symbols = ['AAPL', 'AMZN', 'GS', 'JPM', 'GOOGL', 'ABNB',
+               'BARK', 'APRN', 'CHWY', 'CAG', 'LLY', 'FND', 'EDU',
+               'PYPL', 'PEBO', "RBLX", 'SHAK', 'SHOP', 'TDOC', 'VRTX', 'VICI']
+
+    # a, b, c = asyncio.run(main(symbols))
+    c = asyncio.run(main(symbols))
     print(f"took {time.time() - start_time} sec")
 
-    print("1.Result of historic-bar is as follows")
-    for ticker, dataframe in a:
-        if not dataframe.empty:
-            print("Ticker: {}".format(ticker))
-            print(dataframe)
+    # print("1.Result of historic-bar is as follows")
+    # for ticker, dataframe in a:
+    #     if not dataframe.empty:
+    #         print("Ticker: {}".format(ticker))
+    #         print(dataframe)
+    #         print(dataframe.describe())
 
-    print("2.Result of historic-trade is as follows")
-    for ticker, dataframe in b:
-        if not dataframe.empty:
-            print("Ticker: {}".format(ticker))
-            print(dataframe)
+    # print("2.Result of historic-trade is as follows")
+    # for ticker, dataframe in b:
+    #     if not dataframe.empty:
+    #         print("Ticker: {}".format(ticker))
+    #         print(dataframe)
+    #         print(dataframe.describe())
 
     print("3.Result of historic-quote is as follows")
     for ticker, dataframe in c:
         if not dataframe.empty:
             print("Ticker: {}".format(ticker))
             print(dataframe)
+            print(dataframe.describe())
