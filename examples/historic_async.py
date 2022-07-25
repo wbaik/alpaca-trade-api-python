@@ -80,7 +80,7 @@ async def main(symbols):
     # end = pd.Timestamp('2022-02-10', tz=NY).date().isoformat()
     # start = pd.Timestamp('2021-02-10 09:30:00', tz='UTC').date().isoformat()
     # end = pd.Timestamp('2021-02-10 09:45:00', tz='UTC').date().isoformat()
-    start, end = '2021-02-10T16:30:00Z', '2021-02-10T16:45:00Z'
+    start, end = '2021-02-10T16:30:00Z', '2021-02-10T17:00:00Z'
     timeframe: TimeFrame = TimeFrame.Minute
     # a = await get_historic_bars(symbols, start, end, timeframe)
     # b = await get_historic_trades(symbols, start, end, timeframe)
