@@ -118,6 +118,7 @@ class EntityList(list):
 
             df.columns = [self.mapping.get(c, c) for c in df.columns]
             if not df.empty:
+                # https://msgpack-python.readthedocs.io/en/latest/_modules/msgpack/ext.html
                 df['timestamp'] = df['timestamp'].map(lambda x: x.to_datetime())
                 df.set_index('timestamp', inplace=True)
                 df.index = pd.DatetimeIndex(df.index)
