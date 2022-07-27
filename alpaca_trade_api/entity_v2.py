@@ -125,8 +125,7 @@ class EntityList(list):
                     df['timestamp'] = df['timestamp'].map(lambda x: x.to_datetime())
                 df.set_index('timestamp', inplace=True)
 
-                df.index = df.index.to_pydatetime()
-                # df.index = pd.DatetimeIndex(df.index)
+                df.index = pd.DatetimeIndex(df.index)
             self._df = df
         return self._df
 
