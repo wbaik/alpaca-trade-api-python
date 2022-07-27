@@ -120,6 +120,7 @@ class EntityList(list):
 
             df.columns = [self.mapping.get(c, c) for c in df.columns]
             if not df.empty:
+                print(df.dtypes)
                 if (df['timestamp'].dtype == msgpack.Timestamp) or isinstance(df['timestamp'][0], msgpack.Timestamp):
                     # https://msgpack-python.readthedocs.io/en/latest/_modules/msgpack/ext.html
                     df['timestamp'] = df['timestamp'].map(lambda x: x.to_datetime())
