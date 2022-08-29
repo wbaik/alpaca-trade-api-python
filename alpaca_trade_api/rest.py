@@ -1058,8 +1058,12 @@ class REST(object):
         """
         params = {}
         if start is not None:
+            if not start.endswith('Z'):
+                start = start + 'T00:00:00Z'
             params['start'] = start
         if end is not None:
+            if not end.endswith('Z'):
+                end = end + 'T23:59:00Z'
             params['end'] = end
         resp = self.get('/calendar', data=params)
         if self._use_raw_data:
